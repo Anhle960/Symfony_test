@@ -4,44 +4,48 @@ namespace App\Controller;
 
 use Doctrine\DBAL\DriverManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Psr\Log\LoggerInterface;
+use App\Service\UserService;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Routing\Alias;
 
 class UserController extends AbstractController
 {
-    #[Route('/user')]
-    public function request($request)
+    private $logger;
+    private $userService;
+
+
+    public function __construct(
+        UserService $userService,
+        LoggerInterface $logger
+    ) {
+        $this->userService = $userService;
+        $this->logger = $logger;
+    }
+
+    #[Route('/user', name: 'app_user')]
+    public function request(Request $request)
     {
-        $connection = $this->getConnection();
-
-        $tableExists = $this->executeRequest("SELECT * FROM information_schema.tables WHERE table_schema = 'symfony' AND table_name = 'user' LIMIT 1;", $connection);
-        if (empty($tableExists)) {
-            $this->executeRequest("CREATE TABLE user (id int, data varchar(255))", $connection);
-            $this->executeRequest("INSERT INTO user(id, data) values(1, 'Barack - Obama - White House')", $connection);
-            $this->executeRequest("INSERT INTO user(id, data) values(1, 'Britney - Spears - America')", $connection);
-            $this->executeRequest("INSERT INTO user(id, data) values(1, 'Leonardo - DiCaprio - Titanic')", $connection);
-        }
-
         if ($request->getMethod() == "GET") {
-            $id = $request->get("id");
             $action = $request->get("action");
 
-            if ($action == "delete") {
-                $this->executeRequest("DELETE FROM user WHERE id = " . $id, $connection);
+            if ($action === 'delete') {
+                $id = $request->query->get('id');
+                $this->userService->deleteUserById($id);
             }
         } else if ($request->getMethod() == "POST") {
-            $firstname = $request->get("firstname");
-            $lastname = $request->get("lastname");
-            $address = $request->get("address");
-
-            $this->executeRequest("INSERT INTO user(id, data) values(" . time() . ", '" . $firstname . " - " . $lastname . " - " . $address . "');", $connection);
+            $this->userService->addNewOrUpdateUser($request);
         }
 
-        $users = $this->executeRequest("SELECT * FROM user;", $connection);
+        $limit = 10;
+        $page = $request->query->getInt('page', 1);
+        $users = $this->userService->getPaginatedUsersTable($page, $limit);
 
         return $this->render('user.html.twig', [
             'obj' => $request->getMethod(),
-            'users' => $users
+            'users' => $users,
+            'currentPage' => $page,
+            'maxPages' => $this->userService->getMaxPages($limit),
         ]);
     }
 
@@ -61,5 +65,18 @@ class UserController extends AbstractController
     {
         $stmt = $connection->prepare($sql);
         return $stmt->executeQuery()->fetchAllAssociative();
+    }
+
+    #[Route('/logout', name: 'app_logout')]
+    public function logout()
+    {
+        // trigger Symfony's logout process
+        $this->container->get('security.token_storage')->setToken(null);
+
+        $session = $this->container->get('session');
+        $session->invalidate();
+
+
+        return $this->redirectToRoute('app_login');
     }
 }

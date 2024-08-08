@@ -2,81 +2,25 @@
 <html>
 <head>
     <title>User Management</title>
-    <style>
-        html {
-            font-family: Arial, Helvetica, sans-serif;
-            width: 60%;
-            margin: auto;
-        }
-
-        h1 {
-            color: #048186;
-        }
-
-        input[type=text], select {
-            width: 100%;
-            padding: 12px 20px;
-            margin: 8px 0;
-            display: inline-block;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-
-        input[type=submit] {
-            width: 100%;
-            background-color: #04a4aa;
-            color: white;
-            padding: 14px 20px;
-            margin: 8px 0;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        input[type=submit]:hover {
-            background-color: #04a4aa;
-        }
-
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-
-        table td, table th {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
-
-        table tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-
-        table tr:hover {
-            background-color: #ddd;
-        }
-
-        table th {
-            padding-top: 12px;
-            padding-bottom: 12px;
-            text-align: left;
-            background-color: #04a4aa;
-            color: white;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/user.css') }}">
 </head>
 <body>
 
-<h1>Add user form</h1>
+<div class="header-container">
+    <h1>Add user form</h1>
+    <button type="button" onclick="window.location.href='{{ path('app_logout') }}'" class="logout-button">Logout</button>
+</div>
+
 
 <form action="/user" method="POST">
+    <input type="hidden" id="user_id" name="user_id">
     <label for="firstname">First name:</label><br>
     <input type="text" id="firstname" name="firstname"><br>
     <label for="lastname">Last name:</label><br>
     <input type="text" id="lastname" name="lastname"><br>
     <label for="address">Address:</label><br>
     <input type="text" id="address" name="address"><br><br>
-    <input type="submit" value="Add user">
+    <input type="submit" id="submitbutton" value="Add user">
 </form>
 
 <h1>User list</h1>
@@ -85,14 +29,44 @@
     <tr>
         <th>User</th>
         <th>Delete</th>
+        <th>Edit</th>
     </tr>
     {% for user in users %}
         <tr>
-            <td>{{ user['data'] }}</td>
-            <td><a href="/user?action=delete&id={{ user['id'] }}">Delete</a></td>
+            <td>{{ user.data }}</td>
+            <td><a href="/user?action=delete&id={{ user.id }}">Delete</a></td>
+            <td><a href="#" onclick="editUser('{{ user.id }}', '{{ user.data }}'); return false;">Edit</a></td>
         </tr>
     {% endfor %}
+    
 </table>
+
+<div class="pagination-container">
+    <div class="pagination">
+        <a href="{{ path('app_user', {'page': currentPage - 1}) }}" class="arrow {% if currentPage == 1 %}disabled{% endif %}">&lt;</a>
+        
+        {% for i in 1..maxPages %}
+            {% if i == currentPage %}
+                <span class="current-page">{{ i }}</span>
+            {% else %}
+                <a href="{{ path('app_user', {'page': i}) }}">{{ i }}</a>
+            {% endif %}
+        {% endfor %}
+
+        <a href="{{ path('app_user', {'page': currentPage + 1}) }}" class="arrow {% if currentPage == maxPages %}disabled{% endif %}">&gt;</a>
+    </div>
+<div>
+
+<script>
+function editUser(id, data) {
+    var [firstname, lastname, address] = data.split(' - ');
+    document.getElementById('user_id').value = id;
+    document.getElementById('firstname').value = firstname;
+    document.getElementById('lastname').value = lastname;
+    document.getElementById('address').value = address;
+    document.getElementById('submitbutton').value = 'Save';
+}
+</script>
 
 </body>
 </html>
