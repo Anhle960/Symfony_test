@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <link rel="stylesheet" href="{{ asset('css/login.css') }}">
+</head>
+<body>
+    <h1>Login</h1>
+    <form method="post">
+        {% if error %}
+            <div class="alert alert-danger">Login unsuccessful. Please recheck your email & password informations</div>
+        {% endif %}
+
+        <label for="inputEmail">Email</label>
+        <input type="email" name="email" id="inputEmail" required autofocus>
+        <label for="inputPassword">Password</label>
+        <input type="password" name="password" id="inputPassword" required>
+
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+        <button type="submit">Sign in</button>
+    </form>
+    <button type="button" onclick="window.location.href='{{ path('app_register') }}'" class="register-button">Register</button>
+</body>
+</html>
