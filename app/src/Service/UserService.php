@@ -27,9 +27,8 @@ class UserService
 
     public function addNewOrUpdateUser(Request $request)
     {
+        $userId = $request->request->get('user_id');
         try {
-            $userId = $request->request->get('user_id');
-
             $userData = $request->request->get('firstname') . ' - ' . $request->request->get('lastname') . ' - ' . $request->request->get('address');
 
             if ($userId) {
